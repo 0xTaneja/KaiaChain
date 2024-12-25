@@ -9,15 +9,35 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coinbase/wallet-sdk": "^4.2.4",
+    "@ethereumjs/tx": "^5.4.0",
+    "@google/generative-ai": "^0.21.0",
+    "@kaiachain/ethers-ext": "^1.1.0",
+    "@klaytn/kaikas-web3-provider": "^1.0.3",
+    "@klaytn/klip-web3-provider": "^1.0.2",
+    "@klaytn/web3modal": "^1.1.1",
+    "@langchain/openai": "^0.3.16",
+    "@web3-onboard/coinbase": "^2.4.1",
+    "@web3-onboard/core": "^2.23.0",
+    "@web3-onboard/injected-wallets": "^2.11.2",
+    "@web3-onboard/walletconnect": "^2.6.1",
+    "ai": "^4.0.22",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "ethers": "^6.13.4",
+    "groq-sdk": "^0.9.1",
+    "lucide-react": "^0.469.0",
+    "next": "15.1.2",
+    "node-cache": "^5.1.2",
+    "openai": "^4.77.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.1.2"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "@eslint/eslintrc": "^3",
     "eslint": "^9",
     "eslint-config-next": "15.1.2",
-    "@eslint/eslintrc": "^3"
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
   }
 }
