@@ -1,37 +1,9 @@
-import { useState } from 'react';
-
-export default function Header() {
-  const [account, setAccount] = useState(null);
-
-  const connectWallet = async () => {
-    if (typeof window.klaytn !== 'undefined') {
-      try {
-        // Request account access
-        await window.klaytn.enable();
-        const accounts = window.klaytn.selectedAddress;
-        setAccount(accounts);
-        console.log('Connected account:', accounts);
-      } catch (error) {
-        console.log('Error connecting wallet:', error);
-      }
-    } else {
-    
-      alert('Kaia wallet is not installed. Please install the Kaia wallet extension to connect.');
-    }
-  };
-
-  const disconnectWallet = () => {
-    if (account) {
-      console.log('Disconnected account:', account);
-      setAccount(null);
-    }
-  };
-
+export default function Header({ account, connectWallet, disconnectWallet }) {
   return (
     <header className="h-16 border-b bg-black flex items-center justify-between px-4">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-          <span className="text-white text-xl">⚡</span>
+          <img src='/kaia.png' alt="Kaia Logo" />
         </div>
       </div>
       <div className="flex items-center gap-2">
