@@ -14,12 +14,12 @@ const cors = Cors({ methods: ['GET', 'POST', 'HEAD'] });
 const mainnetprovider = new URL("https://public-en.node.kaia.io")
 const testnetprovider = new URL("https://public-en-kairos.node.kaia.io")
 const priceCache = new NodeCache({ stdTTL: 60 });
-
+const addressch = new NodeCache();
 export async function POST(request) 
 {
  const {message,address}=await request.json();
-
-
+ const addressc = addressch.get('Address');
+ console.log(addressc)
 
  try{
    console.log("Recieved Query",message)
@@ -124,7 +124,7 @@ function getCircularReplacer() {
     const walletType = getParam("walletType") || "MY_WALLET";
     let addressToUse =
       walletType === "SPECIFIED_WALLET" ? getParam("address") : walletAddress;
-  
+    console.log(walletAddress);
     // Validate address
     if (!addressToUse || !/^0x[a-fA-F0-9]{40}$/.test(addressToUse)) {
       addressToUse = walletAddress;

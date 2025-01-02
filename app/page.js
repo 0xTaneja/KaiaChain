@@ -6,7 +6,9 @@ import Sidebar from './components/Sidebar';
 import ChatArea from './components/chat-area';
 import Header from './components/header';
 import InputArea from './components/input-area';
+import NodeCache from 'node-cache';
 
+const addressc = new NodeCache();
 export default function Home() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const { messages, input, handleInputChange, isLoading } = useChat();
@@ -41,7 +43,8 @@ export default function Home() {
         await window.klaytn.enable();
         const accounts = window.klaytn.selectedAddress;
         setAccount(accounts);
-        localStorage.setItem('connectedAccount', accounts); // Persist account
+        localStorage.setItem('connectedAccount', accounts)
+        addressc.set("Address",accounts); // Persist account
       } catch (error) {
         setError('Error connecting wallet');
       }

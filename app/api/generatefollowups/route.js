@@ -40,7 +40,7 @@ Suggested follow-up questions or actions:
       throw new Error("AI response is undefined or invalid.");
     }
 
-    const followUpMessages = aiResponse.response.split("\n").filter((line) => line.trim().length > 0);
+    const followUpMessages = aiResponse.response.text().split("\n").filter((line) => line.trim().length > 0);
 
     console.log("Generated follow-up messages:", followUpMessages);
 
