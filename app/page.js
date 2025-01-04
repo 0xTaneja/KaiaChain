@@ -10,7 +10,7 @@ import NodeCache from 'node-cache';
 
 const addressc = new NodeCache();
 export default function Home() {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const { messages, input, handleInputChange, isLoading } = useChat();
   const [account, setAccount] = useState(null);
   const [messagesWithTimestamp, setMessagesWithTimestamp] = useState([]);
@@ -92,7 +92,7 @@ export default function Home() {
 
       <Sidebar
         isExpanded={isSidebarExpanded}
-        onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        onToggle={() => setIsSidebarExpanded(isSidebarExpanded)}
       />
 
       <main className="flex-1 flex flex-col">

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const suggestions = [
   {
@@ -27,9 +27,53 @@ export default function ChatArea({ account, messages }) {
     }
   }, [messages]);
 
+  const Message = ({ content, timestamp, role }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const isLongContent = content.length > 300; // Threshold for long content
+
+    return (
+      <div className="flex items-start gap-2.5">
+        {/* Avatar */}
+        <div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
+          <span className="font-medium text-gray-600 dark:text-gray-300">
+            {role === "user" ? "US" : "AI"}
+          </span>
+        </div>
+
+        {/* Message Content */}
+        <div className="flex flex-col gap-1 w-full max-w-[320px] md:max-w-[600px]">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-semibold text-gray-900">
+              {role === "user" ? "You" : "RUSH"}
+            </span>
+            <span className="text-sm font-normal text-gray-400">{timestamp}</span>
+          </div>
+          <div
+            className={`relative flex flex-col p-4 border border-gray-300 rounded-lg bg-gray-100 transition-all duration-300 ${
+              isExpanded ? "max-h-full" : "max-h-40 overflow-hidden"
+            }`}
+          >
+            <p className="text-sm font-normal text-gray-700">{content}</p>
+            {isLongContent && !isExpanded && (
+              <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-gray-100 via-gray-100"></div>
+            )}
+          </div>
+          {isLongContent && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-sm text-blue-500 underline self-start mt-1"
+            >
+              {isExpanded ? "Show Less" : "View Full"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
-      className="flex-1 overflow-auto p-4"
+      className="flex-1 overflow-auto p-4 bg-gray-50"
       ref={chatContainerRef}
       style={{ maxHeight: "80vh" }}
     >
@@ -59,31 +103,12 @@ export default function ChatArea({ account, messages }) {
         ) : (
           <div className="space-y-5">
             {messages.map((m) => (
-              <div key={m.id} className="flex items-start gap-2.5">
-                {/* Avatar */}
-                <div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    {m.role === "user" ? "US" : "AI"}
-                  </span>
-                </div>
-
-                {/* Message Content */}
-                <div className="flex flex-col gap-1 w-full max-w-[320px]">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {m.role === "user" ? "You" : "RUSH"}
-                    </span>
-                    <span className="text-sm font-normal text-gray-400">
-                      {m.timestamp}
-                    </span>
-                  </div>
-                  <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
-                    <p className="text-sm font-normal text-gray-700">
-                      {m.content}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <Message
+                key={m.id}
+                content={m.content}
+                timestamp={m.timestamp}
+                role={m.role}
+              />
             ))}
           </div>
         )}

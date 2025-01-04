@@ -78,7 +78,7 @@ export default function InputArea({
     <form onSubmit={handleSubmit} className="flex items-center p-4 bg-gray-100 border-t">
       <input
         type="text"
-        className="flex-1 px-4 py-2 border rounded-lg focus:outline-none"
+        className="flex-1 px-4 py-2 border rounded-lg text-black focus:outline-none"
         placeholder={account ? "Type a message..." : "Connect your wallet to start chatting."}
         value={input}
         onChange={handleInputChange}
