@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function InputArea({
   input,
@@ -12,68 +12,67 @@ export default function InputArea({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || !account) return;
-  
+    
     setIsSubmitting(true);
-  
+    
     try {
-      const objectWithData = {
+      // Detect transaction-related input
+      const transactionMatch = input.match(/send\s(\d+(\.\d+)?)\s?kaia\s?to\s([a-zA-Z0-9]+)/i);
+
+      const requestBody = {
         message: input,
         address: account,
       };
-  
-      // First API call
-      const response = await fetch('/api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(objectWithData),
+
+      if (transactionMatch) {
+        // Extract transaction details
+        const amount = parseFloat(transactionMatch[1]);
+        const recipient = transactionMatch[3];
+
+        // Add transaction data to the request body
+        requestBody.transaction = {
+          actionType: "SEND_TRANSACTION",
+          recipient,
+          amount,
+        };
+      }
+      
+      // Make API call
+      const response = await fetch("/api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
-  
+
       const data = await response.json();
-      const botMessage = {
-        id: Date.now(),
-        role: 'bot',
-        content: data.response || 'No response received.',
-        timestamp: new Date().toLocaleTimeString(),
-      };
-  
-      // Append the bot's response to the messages
+
+      // Update UI with the backend's response
       setMessagesWithTimestamp((prev) => [
         ...prev,
-        { id: Date.now() - 1, role: 'user', content: input, timestamp: new Date().toLocaleTimeString() },
-        botMessage,
+        { id: Date.now() - 1, role: "user", content: input, timestamp: new Date().toLocaleTimeString() },
+        {
+          id: Date.now(),
+          role: "bot",
+          content: data.response || "An error occurred.",
+          timestamp: new Date().toLocaleTimeString(),
+        },
       ]);
-  
-      // Call the follow-up suggestions API if botMessage.content exists
-      if (botMessage.content) {
-        const followUpResponse = await fetch('/api/generatefollowups', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lastBotMessage: data.response,
-          }),
-        });
-  
-        const followUpData = await followUpResponse.json();
-  
-        if (followUpData.followUpMessages && followUpData.followUpMessages.length > 0) {
-          const followUpMessages = followUpData.followUpMessages.map((msg) => ({
-            id: Date.now() + Math.random(), // Unique ID
-            role: 'follow-up',
-            content: msg,
-            timestamp: new Date().toLocaleTimeString(),
-          }));
-  
-          // Append follow-up messages to the chat
-          setMessagesWithTimestamp((prev) => [...prev, ...followUpMessages]);
-        }
-      }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error:", error);
+      setMessagesWithTimestamp((prev) => [
+        ...prev,
+        { id: Date.now() - 1, role: "user", content: input, timestamp: new Date().toLocaleTimeString() },
+        {
+          id: Date.now(),
+          role: "bot",
+          content: "An error occurred while processing your request.",
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center p-4 bg-gray-100 border-t">
@@ -90,7 +89,7 @@ export default function InputArea({
         className="ml-4 px-4 py-2 text-white bg-blue-500 rounded-lg disabled:opacity-50"
         disabled={!input.trim() || isSubmitting || !account}
       >
-        {isSubmitting ? 'Sending...' : 'Send'}
+        {isSubmitting ? "Sending..." : "Send"}
       </button>
     </form>
   );

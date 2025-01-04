@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import NodeCache from "node-cache";
 
 const geminiobj = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = geminiobj.getGenerativeModel({model:"gemini-1.5-flash"})
-
+const model = geminiobj.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function POST(request) {
   const { lastBotMessage } = await request.json();
 
   try {
-    console.log("Received last bot message:", lastBotMessage);  
-
     const prompt = `
 You are a helpful assistant that suggests precise follow-up questions based on the previous bot message. The user interacts with a system that supports the following actions related to the Solana blockchain and cryptocurrency:
 
@@ -23,30 +19,25 @@ Given the bot's last response, generate 2-3 follow-up questions or actions that 
 
 Bot's last response: "${lastBotMessage}"
 
-Your task is to generate only the follow-up questions or actions. Avoid any suffix, prefix,numbering  or additional text and when generating questions about transactions - generate for KAIA. The follow-up messages should be explicit and specific. For instance:
+Your task is to generate only the follow-up questions or actions. Avoid any suffix, prefix, numbering, or additional text. The follow-up messages should be explicit and specific. For instance:
 
-If the question is about the price of a cryptocurrency, mention the specific asset (whats the current price of KAIA).
-If inquiring about wallet balance, specify the network (e.g., "Check my KAIA balance on testnet").
-If inquiring about sending transaction , specify wallet like - send 0.2 KAIA to C1Q85yjUtPQookfxbAFzJo9whF7nnN5RqduDFviZ9FVZ on testnet
-
-Suggested follow-up questions or actions:
+- "What's the current price of KAIA?"
+- "Check my KAIA balance on testnet."
+- "Send 0.2 KAIA to C1Q85yjUtPQookfxbAFzJo9whF7nnN5RqduDFviZ9FVZ on testnet."
 `;
-    
+
     const aiResponse = await model.generateContent(prompt);
-
-    console.log("AI response:", aiResponse); 
-
-    if (!aiResponse || !aiResponse.response) {
-      throw new Error("AI response is undefined or invalid.");
-    }
-
-    const followUpMessages = aiResponse.response.text().split("\n").filter((line) => line.trim().length > 0);
-
-    console.log("Generated follow-up messages:", followUpMessages);
+    const followUpMessages = aiResponse.response
+      .text()
+      .split("\n")
+      .filter((line) => line.trim().length > 0);
 
     return NextResponse.json({ followUpMessages });
   } catch (error) {
     console.error("Error generating follow-ups:", error);
-    return NextResponse.json({ error: "Failed to generate follow-up messages." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate follow-up messages." },
+      { status: 500 }
+    );
   }
 }

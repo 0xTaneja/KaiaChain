@@ -2,9 +2,10 @@ import { ethers } from "ethers";
 import Cors from 'cors';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-
+const { TxType, parseKlay } = require("@kaiachain/ethers-ext/v6");
 import axios from "axios";
 import NodeCache from "node-cache";
+
 
 
 console.log(process.env.GEMINI_API_KEY);
@@ -206,11 +207,12 @@ function getCircularReplacer() {
           console.log(
             `Sending ${amount} KAIA to ${recipient} from ${addressToUse} on ${network}`
           );
-          const result = await sendTransaction(
+          const result = await sendTransactionKaiaViaWallet(
             addressToUse,
             recipient,
             amount,
-            network
+            network,
+            signTransactionWithKaiaWallet
           );
           if (result.error) {
             return result.error;
@@ -543,85 +545,92 @@ async function getBalance(
     return { error: `Failed to fetch balance: ${err.message || err}` };
   }
 }
+const signTransactionWithKaiaWallet = async (tx) => {
+  if (typeof window !== "undefined" && typeof window.kaia !== "undefined") {
+    try {
+      console.log("Requesting transaction signing from Kaia Wallet.");
+      const signedTransaction = await window.kaia.request({
+        method: "kaia_signTransaction",
+        params: [tx],
+      });
+      return signedTransaction;
+    } catch (error) {
+      console.error("Error signing transaction:", error.message || error);
+      throw new Error("Transaction signing failed. Ensure Kaia Wallet is connected.");
+    }
+  } else {
+    throw new Error("Kaia Wallet is not detected or window is not defined.");
+  }
+};
 
-
-
-
-async function sendTransaction(senderAddress, receiverAddress, amount, network) {
+// Function to send a transaction via Kaia Wallet and broadcast to the blockchain
+const sendTransactionKaiaViaWallet = async (
+  senderAddress,
+  receiverAddress,
+  amount,
+  network = "testnet" // Default to testnet
+) => {
   try {
-    // Determine the provider based on the network
+    // Validate addresses and input
+    if (!senderAddress || !receiverAddress || !amount) {
+      throw new Error("Invalid parameters. Ensure sender, receiver, and amount are provided.");
+    }
+
+    // Public EN node endpoints for Kaia blockchain
     const rpcEndpoint =
       network === "testnet"
-        ? "https://public-en-kairos.node.kaia.io/"
+        ? "https://public-en-kairos.node.kaia.io"
         : "https://public-en.node.kaia.io";
 
-    const provider = new ethers.JsonRpcProvider(rpcEndpoint);
-
-    // Validate addresses
-    if (!ethers.isAddress(senderAddress) || !ethers.isAddress(receiverAddress)) {
-      return {
-        error: "Invalid sender or receiver address.",
-        network,
-      };
-    }
-
-    // Get the balance of the sender
-    const balanceInWei = await provider.getBalance(senderAddress);
-    const balanceInKAIA = ethers.formatEther(balanceInWei);
-
-    if (parseFloat(balanceInKAIA) < amount) {
-      return {
-        error: `Insufficient Balance. Your current balance is ${parseFloat(
-          balanceInKAIA
-        ).toFixed(6)} KAIA, which is less than the requested amount of ${amount} KAIA.`,
-        network,
-      };
-    }
-
-    // Convert amount to Wei
-    const amountInWei = ethers.parseEther(amount.toString());
-
     // Prepare the transaction object
-    const transaction = {
+    const tx = {
+      from: senderAddress,
       to: receiverAddress,
-      value: amountInWei.toString(), // Convert to string for serialization
+      gas: "0x76c0", // Hexadecimal for gas limit (30,000)
+      gasPrice: "0x5d21dba00", // Hexadecimal for gas price (25 gwei)
+      value: `0x${parseInt(amount).toString(16)}`, // Convert amount to hexadecimal
+      input: "0x", // Empty data field for basic value transfer
     };
 
-    // Fetch the latest nonce for the sender
-    const nonce = await provider.getTransactionCount(senderAddress, "latest");
+    console.log("Prepared transaction:", tx);
 
-    // Dynamically fetch gas price and estimate gas limit
-    const feeData = await provider.getFeeData();
-    const gasPrice = feeData.gasPrice?.toString();
-    if (!gasPrice) {
-      throw new Error("Failed to fetch gas price");
+    // Sign the transaction using Kaia Wallet
+    const signedTx = await signTransactionWithKaiaWallet(tx);
+
+    if (!signedTx) {
+      throw new Error("Transaction signing was canceled or failed.");
     }
 
-    const gasLimit = (await provider.estimateGas({
-      ...transaction,
-      from: senderAddress,
-    })).toString();
+    console.log("Signed transaction:", signedTx);
 
-    // Include nonce, gasPrice, and gasLimit in the transaction object
-    transaction.nonce = nonce;
-    transaction.gasPrice = gasPrice;
-    transaction.gasLimit = gasLimit;
+    // Send the signed transaction to the blockchain
+    const response = await axios.post(rpcEndpoint, {
+      method: "kaia_sendTransaction",
+      jsonrpc: "2.0",
+      id: 1,
+      params: [signedTx],
+    });
 
-    // Return only serializable data
+    if (response.data.error) {
+      throw new Error(response.data.error.message || "Transaction failed.");
+    }
+
+    console.log("Transaction broadcasted successfully. Hash:", response.data.result);
+
     return {
-      transaction,
-      message: `Transaction prepared to send ${amount} KAIA from ${senderAddress} to ${receiverAddress} on ${network}.`,
-      network,
-      connection: { rpcEndpoint }, // Use the known RPC endpoint string
+      hash: response.data.result,
+      message: `Transaction sent successfully! Hash: ${response.data.result}`,
     };
   } catch (error) {
-    console.error("Error preparing transaction:", error);
+    console.error("Error sending transaction:", error.message || error);
     return {
-      error: `Transaction preparation failed: ${error.message}`,
-      network,
+      error: `Transaction failed: ${error.message}`,
     };
   }
-}
+};
+
+
+
 
 
 
